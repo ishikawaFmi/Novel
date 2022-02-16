@@ -24,26 +24,8 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        string textLine = textAsset.text;//text全体いれる
-
-        string[] textMessege = textLine.Split('\n');//一行ずつに分ける
-
-        int columnLength = textMessege[0].Split(' ').Length;
-        int rowLength = textMessege.Length;
-
-        m_talkText = new string[rowLength, columnLength];
-
-        for (int i = 0; i < rowLength; i++)
-        {
-            string[] tempWords = textMessege[i].Split(' ');
-
-            for (int n = 0; n < columnLength; n++)
-            {
-                m_talkText[i, n] = tempWords[n];
-                Debug.Log(m_talkText[i, n]);
-            }
-        }
-
+        CreateText();
+        m_characterManager.CharacterImageSetUp();
         var next = new Next();
         Talk(next).Forget();
 
@@ -61,12 +43,11 @@ public class GameManager : MonoBehaviour
             m_text.text = "";//Textを初期化
 
             m_characterManager.m_characterNameText.text = m_talkText[m_page, 1];//キャプションに名前を入れる
-                                                                                //    m_characterManager.CharacterEmphasis();//話しているキャラクターを強調させる
+            m_characterManager.CharacterEmphasis();//m_characterManager.CharacterEmphasis();//話しているキャラクターを強調させる
 
             string valueText = m_talkText[m_page, 2];
 
             var cancellationToken = new CancellationTokenSource();
-            Event(cancellationToken.Token).Forget();
             await UniTask.WhenAny(next.IsNextAsync(), NextPage(valueText, cancellationToken.Token));
             
             cancellationToken.Cancel();
@@ -87,6 +68,7 @@ public class GameManager : MonoBehaviour
 
     async UniTask NextPage(string valueText, CancellationToken cancellationToken)
     {
+        await Event(cancellationToken);
         foreach (var word in valueText)
         {
             m_text.text += word;
@@ -116,13 +98,34 @@ public class GameManager : MonoBehaviour
                await m_characterManager.CharacterFadeOut(m_talkText[m_page, 1], cancellationToken);
                 break;
             case 3:
-                await m_BackGroundManager.fadeIn(cancellationToken);
-                m_BackGroundManager.ChangeBackGround();
-                await m_BackGroundManager.fadeOut(cancellationToken);
+               await m_BackGroundManager.ChangeFadeBackGround(cancellationToken);
                 break;
             default:
 
                 break;
+        }
+    }
+
+    void CreateText()
+    {
+        string textLine = textAsset.text;//text全体いれる
+
+        string[] textMessege = textLine.Split('\n');//一行ずつに分ける
+
+        int columnLength = textMessege[0].Split(' ').Length;
+        int rowLength = textMessege.Length;
+
+        m_talkText = new string[rowLength, columnLength];
+
+        for (int i = 0; i < rowLength; i++)
+        {
+            string[] tempWords = textMessege[i].Split(' ');
+
+            for (int n = 0; n < columnLength; n++)
+            {
+                m_talkText[i, n] = tempWords[n];
+                Debug.Log(m_talkText[i, n]);
+            }
         }
     }
 }
